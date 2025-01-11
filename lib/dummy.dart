@@ -1,52 +1,28 @@
-
-import 'package:flutter/material.dart';
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
+class EmployeeRegistrationPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Clinic Registration',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ClinicRegistrationPage(),
-    );
-  }
+  _EmployeeRegistrationPageState createState() => _EmployeeRegistrationPageState();
 }
 
-class ClinicRegistrationPage extends StatefulWidget {
-  @override
-  _ClinicRegistrationPageState createState() => _ClinicRegistrationPageState();
-}
-
-class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
+class _EmployeeRegistrationPageState extends State<EmployeeRegistrationPage> {
   final _formKey = GlobalKey<FormState>();
-  final _clinicNameController = TextEditingController();
-  final _addressLine1Controller = TextEditingController();
-  final _addressLine2Controller = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _countryController = TextEditingController();
-  final _postalCodeController = TextEditingController();
-  final _contactNumberController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  String? _selectedRole;
+  bool _isActive = true;
+
+  final List<String> _roles = ['Doctor', 'Nurse', 'Admin', 'Receptionist'];
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       // If the form is valid, display the data in the console.
-      print('Clinic Name: ${_clinicNameController.text}');
-      print('Address Line 1: ${_addressLine1Controller.text}');
-      print('Address Line 2: ${_addressLine2Controller.text}');
-      print('City: ${_cityController.text}');
-      print('State: ${_stateController.text}');
-      print('Country: ${_countryController.text}');
-      print('Postal Code: ${_postalCodeController.text}');
-      print('Contact Number: ${_contactNumberController.text}');
+      print('First Name: ${_firstNameController.text}');
+      print('Last Name: ${_lastNameController.text}');
+      print('Role: $_selectedRole');
+      print('Phone: ${_phoneController.text}');
       print('Email: ${_emailController.text}');
+      print('Status: ${_isActive ? "Active" : "Inactive"}');
 
       // Optionally, you can navigate to another screen or show a success message.
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,7 +35,7 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Clinic Registration'),
+        title: Text('Employee Registration'),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -68,83 +44,69 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
           child: Column(
             children: [
               CustomTextFormField(
-                labelText: 'Clinic Name',
-                controller: _clinicNameController,
+                labelText: 'First Name',
+                controller: _firstNameController,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter the clinic name';
+                    return 'Please enter the first name';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16),
               CustomTextFormField(
-                labelText: 'Address Line 1',
-                controller: _addressLine1Controller,
+                labelText: 'Last Name',
+                controller: _lastNameController,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter address line 1';
+                    return 'Please enter the last name';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedRole,
+                decoration: InputDecoration(
+                  labelText: 'Role',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                  labelStyle: TextStyle(color: Colors.blueGrey),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
+                ),
+                items: _roles.map((role) {
+                  return DropdownMenuItem(
+                    value: role,
+                    child: Text(role),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedRole = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a role';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16),
               CustomTextFormField(
-                labelText: 'Address Line 2',
-                controller: _addressLine2Controller,
-              ),
-              SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'City',
-                controller: _cityController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the city';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'State',
-                controller: _stateController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the state';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'Country',
-                controller: _countryController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the country';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'Postal Code',
-                controller: _postalCodeController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the postal code';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'Contact Number',
-                controller: _contactNumberController,
+                labelText: 'Phone',
+                controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter the contact number';
+                    return 'Please enter the phone number';
                   }
                   return null;
                 },
@@ -158,20 +120,41 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter the email';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                      .hasMatch(value)) {
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                     return 'Please enter a valid email';
                   }
                   return null;
                 },
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    'Status:',
+                    style: TextStyle(fontSize: 16, color: Colors.blueGrey),
+                  ),
+                  SizedBox(width: 10),
+                  Switch(
+                    value: _isActive,
+                    onChanged: (value) {
+                      setState(() {
+                        _isActive = value;
+                      });
+                    },
+                    activeColor: Colors.blue,
+                  ),
+                  Text(
+                    _isActive ? 'Active' : 'Inactive',
+                    style: TextStyle(fontSize: 16, color: Colors.blueGrey),
+                  ),
+                ],
               ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _submitForm,
                 child: Text('Submit'),
                 style: ElevatedButton.styleFrom(
-                  padding:
-                      EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
+                  padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -186,56 +169,10 @@ class _ClinicRegistrationPageState extends State<ClinicRegistrationPage> {
 
   @override
   void dispose() {
-    _clinicNameController.dispose();
-    _addressLine1Controller.dispose();
-    _addressLine2Controller.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _countryController.dispose();
-    _postalCodeController.dispose();
-    _contactNumberController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
     super.dispose();
-  }
-}
-
-class CustomTextFormField extends StatelessWidget {
-  final String labelText;
-  final TextEditingController controller;
-  final String? Function(String?)? validator;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-
-  const CustomTextFormField({
-    Key? key,
-    required this.labelText,
-    required this.controller,
-    this.validator,
-    this.keyboardType,
-    this.obscureText = false,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: labelText,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        filled: true,
-        fillColor: Colors.grey[200],
-        contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-        labelStyle: TextStyle(color: Colors.blueGrey),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide(color: Colors.blue, width: 2.0),
-        ),
-      ),
-      validator: validator,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-    );
   }
 }
