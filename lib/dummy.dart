@@ -1,32 +1,89 @@
-class EmployeeRegistrationPage extends StatefulWidget {
+class AppointmentSchedulingPage extends StatefulWidget {
   @override
-  _EmployeeRegistrationPageState createState() => _EmployeeRegistrationPageState();
+  _AppointmentSchedulingPageState createState() => _AppointmentSchedulingPageState();
 }
 
-class _EmployeeRegistrationPageState extends State<EmployeeRegistrationPage> {
+class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  String? _selectedRole;
-  bool _isActive = true;
+  final _patientNameController = TextEditingController();
+  final _reasonController = TextEditingController();
+  String? _selectedDoctor;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
+  String? _selectedStatus;
+  bool _patientExists = false;
 
-  final List<String> _roles = ['Doctor', 'Nurse', 'Admin', 'Receptionist'];
+  final List<String> _doctors = ['Doctor 1', 'Doctor 2', 'Doctor 3'];
+  final List<String> _statuses = ['Scheduled', 'Completed', 'Cancelled', 'No Show'];
+
+  // Mock patient database
+  final Map<String, Map<String, String>> _patients = {
+    '1234567890': {'name': 'Patient 1', 'email': 'patient1@example.com'},
+    '9876543210': {'name': 'Patient 2', 'email': 'patient2@example.com'},
+  };
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
+  void _searchPatient() {
+    final phoneNumber = _phoneController.text;
+    if (_patients.containsKey(phoneNumber)) {
+      setState(() {
+        _patientExists = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Patient found: ${_patients[phoneNumber]!['name']}')),
+      );
+    } else {
+      setState(() {
+        _patientExists = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Patient not found. Please enter patient details.')),
+      );
+    }
+  }
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       // If the form is valid, display the data in the console.
-      print('First Name: ${_firstNameController.text}');
-      print('Last Name: ${_lastNameController.text}');
-      print('Role: $_selectedRole');
-      print('Phone: ${_phoneController.text}');
-      print('Email: ${_emailController.text}');
-      print('Status: ${_isActive ? "Active" : "Inactive"}');
+      print('Patient Phone: ${_phoneController.text}');
+      if (!_patientExists) {
+        print('Patient Name: ${_patientNameController.text}');
+      }
+      print('Doctor: $_selectedDoctor');
+      print('Appointment Date: $_selectedDate');
+      print('Appointment Time: $_selectedTime');
+      print('Reason for Visit: ${_reasonController.text}');
+      print('Status: $_selectedStatus');
 
       // Optionally, you can navigate to another screen or show a success message.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Form Submitted Successfully')),
+        SnackBar(content: Text('Appointment Scheduled Successfully')),
       );
     }
   }
@@ -35,7 +92,7 @@ class _EmployeeRegistrationPageState extends State<EmployeeRegistrationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Employee Registration'),
+        title: Text('Appointment Scheduling'),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -43,32 +100,10 @@ class _EmployeeRegistrationPageState extends State<EmployeeRegistrationPage> {
           key: _formKey,
           child: Column(
             children: [
-              CustomTextFormField(
-                labelText: 'First Name',
-                controller: _firstNameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the first name';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'Last Name',
-                controller: _lastNameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the last name';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedRole,
+              TextFormField(
+                controller: _phoneController,
                 decoration: InputDecoration(
-                  labelText: 'Role',
+                  labelText: 'Phone Number',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -81,28 +116,6 @@ class _EmployeeRegistrationPageState extends State<EmployeeRegistrationPage> {
                     borderSide: BorderSide(color: Colors.blue, width: 2.0),
                   ),
                 ),
-                items: _roles.map((role) {
-                  return DropdownMenuItem(
-                    value: role,
-                    child: Text(role),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedRole = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select a role';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'Phone',
-                controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -112,47 +125,203 @@ class _EmployeeRegistrationPageState extends State<EmployeeRegistrationPage> {
                 },
               ),
               SizedBox(height: 16),
-              CustomTextFormField(
-                labelText: 'Email',
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
+              ElevatedButton(
+                onPressed: _searchPatient,
+                child: Text('Search Patient'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              if (!_patientExists)
+                TextFormField(
+                  controller: _patientNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Patient Name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    labelStyle: TextStyle(color: Colors.blueGrey),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the patient name';
+                    }
+                    return null;
+                  },
+                ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedDoctor,
+                decoration: InputDecoration(
+                  labelText: 'Doctor Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                  labelStyle: TextStyle(color: Colors.blueGrey),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
+                ),
+                items: _doctors.map((doctor) {
+                  return DropdownMenuItem(
+                    value: doctor,
+                    child: Text(doctor),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDoctor = value;
+                  });
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter the email';
-                  }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                    return 'Please enter a valid email';
+                    return 'Please select a doctor';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    'Status:',
-                    style: TextStyle(fontSize: 16, color: Colors.blueGrey),
+              InkWell(
+                onTap: () => _selectDate(context),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Appointment Date',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    labelStyle: TextStyle(color: Colors.blueGrey),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                    ),
                   ),
-                  SizedBox(width: 10),
-                  Switch(
-                    value: _isActive,
-                    onChanged: (value) {
-                      setState(() {
-                        _isActive = value;
-                      });
-                    },
-                    activeColor: Colors.blue,
+                  child: Row(
+                    children: [
+                      Text(
+                        _selectedDate == null
+                            ? 'Select Date'
+                            : '${_selectedDate!.toLocal()}'.split(' ')[0],
+                        style: TextStyle(fontSize: 16, color: Colors.blueGrey),
+                      ),
+                      Spacer(),
+                      Icon(Icons.calendar_today, color: Colors.blue),
+                    ],
                   ),
-                  Text(
-                    _isActive ? 'Active' : 'Inactive',
-                    style: TextStyle(fontSize: 16, color: Colors.blueGrey),
+                ),
+              ),
+              SizedBox(height: 16),
+              InkWell(
+                onTap: () => _selectTime(context),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Appointment Time',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    labelStyle: TextStyle(color: Colors.blueGrey),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                    ),
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      Text(
+                        _selectedTime == null
+                            ? 'Select Time'
+                            : '${_selectedTime!.format(context)}',
+                        style: TextStyle(fontSize: 16, color: Colors.blueGrey),
+                      ),
+                      Spacer(),
+                      Icon(Icons.access_time, color: Colors.blue),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _reasonController,
+                decoration: InputDecoration(
+                  labelText: 'Reason for Visit',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                  labelStyle: TextStyle(color: Colors.blueGrey),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the reason for visit';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                decoration: InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                  labelStyle: TextStyle(color: Colors.blueGrey),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
+                ),
+                items: _statuses.map((status) {
+                  return DropdownMenuItem(
+                    value: status,
+                    child: Text(status),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedStatus = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a status';
+                  }
+                  return null;
+                },
               ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _submitForm,
-                child: Text('Submit'),
+                child: Text('Schedule Appointment'),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
                   shape: RoundedRectangleBorder(
@@ -169,10 +338,9 @@ class _EmployeeRegistrationPageState extends State<EmployeeRegistrationPage> {
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
+    _patientNameController.dispose();
+    _reasonController.dispose();
     super.dispose();
   }
 }
