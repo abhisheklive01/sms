@@ -1,52 +1,34 @@
-class PaymentHistoryDashboard extends StatefulWidget {
+class RevenueReportScreen extends StatefulWidget {
   @override
-  _PaymentHistoryDashboardState createState() => _PaymentHistoryDashboardState();
+  _RevenueReportScreenState createState() => _RevenueReportScreenState();
 }
 
-class _PaymentHistoryDashboardState extends State<PaymentHistoryDashboard> {
-  final List<Map<String, dynamic>> _payments = [
-    {
-      'paymentId': 'P001',
-      'appointmentId': 'A001',
-      'patientName': 'John Doe',
-      'phone': '1234567890',
-      'paymentMethod': 'Cash',
-      'amount': 100.0,
-      'paymentDate': '2023-10-01',
-    },
-    {
-      'paymentId': 'P002',
-      'appointmentId': 'A002',
-      'patientName': 'Jane Smith',
-      'phone': '9876543210',
-      'paymentMethod': 'Card',
-      'amount': 200.0,
-      'paymentDate': '2023-10-05',
-    },
-    {
-      'paymentId': 'P003',
-      'appointmentId': 'A003',
-      'patientName': 'Alice Johnson',
-      'phone': '5555555555',
-      'paymentMethod': 'UPI',
-      'amount': 150.0,
-      'paymentDate': '2023-10-10',
-    },
+class _RevenueReportScreenState extends State<RevenueReportScreen> {
+  final List<Map<String, dynamic>> _revenueData = [
+    {'month': '2023-09', 'revenue': 5000, 'paymentMethod': 'Cash'},
+    {'month': '2023-09', 'revenue': 3000, 'paymentMethod': 'Card'},
+    {'month': '2023-09', 'revenue': 2000, 'paymentMethod': 'UPI'},
+    {'month': '2023-10', 'revenue': 6000, 'paymentMethod': 'Cash'},
+    {'month': '2023-10', 'revenue': 4000, 'paymentMethod': 'Card'},
+    {'month': '2023-10', 'revenue': 1000, 'paymentMethod': 'UPI'},
   ];
 
+  final List<String> _clinics = ['Clinic A', 'Clinic B', 'Clinic C'];
+  final List<String> _paymentMethods = ['Cash', 'Card', 'UPI'];
+
+  String? _selectedClinic;
   String? _selectedPaymentMethod;
   DateTime? _startDate;
   DateTime? _endDate;
-  String _searchQuery = '';
 
-  List<Map<String, dynamic>> get _filteredPayments {
-    return _payments.where((payment) {
-      final matchesName = payment['patientName'].toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesPaymentMethod = _selectedPaymentMethod == null || payment['paymentMethod'] == _selectedPaymentMethod;
-      final paymentDate = DateTime.parse(payment['paymentDate']);
+  List<Map<String, dynamic>> get _filteredRevenueData {
+    return _revenueData.where((data) {
+      final matchesClinic = _selectedClinic == null || true; // Replace with actual clinic filter logic
+      final matchesPaymentMethod = _selectedPaymentMethod == null || data['paymentMethod'] == _selectedPaymentMethod;
+      final month = DateFormat('yyyy-MM').parse(data['month']);
       final matchesDateRange = _startDate == null || _endDate == null ||
-          (paymentDate.isAfter(_startDate!) && paymentDate.isBefore(_endDate!));
-      return matchesName && matchesPaymentMethod && matchesDateRange;
+          (month.isAfter(_startDate!) && month.isBefore(_endDate!));
+      return matchesClinic && matchesPaymentMethod && matchesDateRange;
     }).toList();
   }
 
@@ -70,40 +52,63 @@ class _PaymentHistoryDashboardState extends State<PaymentHistoryDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final revenueByMonth = _filteredRevenueData
+        .groupBy((data) => data['month'])
+        .map((month, data) => MapEntry(
+              month,
+              data.fold(0.0, (sum, item) => sum + item['revenue']),
+            ))
+        .entries
+        .toList();
+
+    final revenueByPaymentMethod = _filteredRevenueData
+        .groupBy((data) => data['paymentMethod'])
+        .map((method, data) => MapEntry(
+              method,
+              data.fold(0.0, (sum, item) => sum + item['revenue']),
+            ))
+        .entries
+        .toList();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Payment History Dashboard'),
+        title: Text('Revenue Report'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Filters
+            DropdownButtonFormField<String>(
+              value: _selectedClinic,
               decoration: InputDecoration(
-                labelText: 'Search by Patient Name',
+                labelText: 'Clinic',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                prefixIcon: Icon(Icons.search),
               ),
+              items: _clinics.map((clinic) {
+                return DropdownMenuItem(
+                  value: clinic,
+                  child: Text(clinic),
+                );
+              }).toList(),
               onChanged: (value) {
                 setState(() {
-                  _searchQuery = value;
+                  _selectedClinic = value;
                 });
               },
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: DropdownButtonFormField<String>(
+            SizedBox(height: 16),
+            DropdownButtonFormField<String>(
               value: _selectedPaymentMethod,
               decoration: InputDecoration(
-                labelText: 'Filter by Payment Method',
+                labelText: 'Payment Method',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                 ),
               ),
-              items: ['Cash', 'Card', 'UPI', 'Google Pay'].map((method) {
+              items: _paymentMethods.map((method) {
                 return DropdownMenuItem(
                   value: method,
                   child: Text(method),
@@ -115,10 +120,8 @@ class _PaymentHistoryDashboardState extends State<PaymentHistoryDashboard> {
                 });
               },
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+            SizedBox(height: 16),
+            Row(
               children: [
                 Expanded(
                   child: InkWell(
@@ -171,34 +174,59 @@ class _PaymentHistoryDashboardState extends State<PaymentHistoryDashboard> {
                 ),
               ],
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(16.0),
-              itemCount: _filteredPayments.length,
-              itemBuilder: (context, index) {
-                final payment = _filteredPayments[index];
-                return Card(
-                  margin: EdgeInsets.only(bottom: 16.0),
-                  child: ListTile(
-                    title: Text('Patient: ${payment['patientName']}'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Phone: ${payment['phone']}'),
-                        Text('Appointment ID: ${payment['appointmentId']}'),
-                        Text('Payment Method: ${payment['paymentMethod']}'),
-                        Text('Amount: \$${payment['amount']}'),
-                        Text('Date: ${payment['paymentDate']}'),
-                      ],
-                    ),
-                  ),
-                );
-              },
+            SizedBox(height: 32),
+
+            // Charts
+            Text(
+              'Revenue by Month',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ),
-        ],
+            SizedBox(height: 16),
+            Container(
+              height: 300,
+              child: SfCartesianChart(
+                primaryXAxis: CategoryAxis(),
+                series: <ChartSeries>[
+                  ColumnSeries<MapEntry<String, double>, String>(
+                    dataSource: revenueByMonth,
+                    xValueMapper: (entry, _) => entry.key,
+                    yValueMapper: (entry, _) => entry.value,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 32),
+            Text(
+              'Revenue by Payment Method',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Container(
+              height: 300,
+              child: SfCartesianChart(
+                primaryXAxis: CategoryAxis(),
+                series: <ChartSeries>[
+                  PieSeries<MapEntry<String, double>, String>(
+                    dataSource: revenueByPaymentMethod,
+                    xValueMapper: (entry, _) => entry.key,
+                    yValueMapper: (entry, _) => entry.value,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+}
+
+extension on List<Map<String, dynamic>> {
+  Map<K, List<Map<String, dynamic>>> groupBy<K>(K Function(Map<String, dynamic>) keyFunction) {
+    return fold({}, (map, item) {
+      final key = keyFunction(item);
+      map.putIfAbsent(key, () => []).add(item);
+      return map;
+    });
   }
 }
