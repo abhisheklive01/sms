@@ -1,89 +1,45 @@
-class AppointmentSchedulingPage extends StatefulWidget {
+class PaymentEntryPage extends StatefulWidget {
   @override
-  _AppointmentSchedulingPageState createState() => _AppointmentSchedulingPageState();
+  _PaymentEntryPageState createState() => _PaymentEntryPageState();
 }
 
-class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
+class _PaymentEntryPageState extends State<PaymentEntryPage> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
-  final _patientNameController = TextEditingController();
-  final _reasonController = TextEditingController();
-  String? _selectedDoctor;
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-  String? _selectedStatus;
-  bool _patientExists = false;
+  final _amountController = TextEditingController();
+  final _transactionIdController = TextEditingController();
+  String? _selectedAppointmentId;
+  String? _selectedPaymentMethod;
 
-  final List<String> _doctors = ['Doctor 1', 'Doctor 2', 'Doctor 3'];
-  final List<String> _statuses = ['Scheduled', 'Completed', 'Cancelled', 'No Show'];
+  final List<String> _appointmentIds = ['Appointment 1', 'Appointment 2', 'Appointment 3'];
+  final List<String> _paymentMethods = ['Cash', 'Card', 'Google Pay', 'UPI'];
 
-  // Mock patient database
-  final Map<String, Map<String, String>> _patients = {
-    '1234567890': {'name': 'Patient 1', 'email': 'patient1@example.com'},
-    '9876543210': {'name': 'Patient 2', 'email': 'patient2@example.com'},
-  };
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
-  }
-
-  void _searchPatient() {
-    final phoneNumber = _phoneController.text;
-    if (_patients.containsKey(phoneNumber)) {
-      setState(() {
-        _patientExists = true;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Patient found: ${_patients[phoneNumber]!['name']}')),
-      );
-    } else {
-      setState(() {
-        _patientExists = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Patient not found. Please enter patient details.')),
-      );
-    }
-  }
-
-  void _submitForm() {
+  void _submitPayment() {
     if (_formKey.currentState!.validate()) {
       // If the form is valid, display the data in the console.
-      print('Patient Phone: ${_phoneController.text}');
-      if (!_patientExists) {
-        print('Patient Name: ${_patientNameController.text}');
-      }
-      print('Doctor: $_selectedDoctor');
-      print('Appointment Date: $_selectedDate');
-      print('Appointment Time: $_selectedTime');
-      print('Reason for Visit: ${_reasonController.text}');
-      print('Status: $_selectedStatus');
+      print('Appointment ID: $_selectedAppointmentId');
+      print('Payment Method: $_selectedPaymentMethod');
+      print('Amount: ${_amountController.text}');
+      print('Transaction ID: ${_transactionIdController.text}');
 
       // Optionally, you can navigate to another screen or show a success message.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Appointment Scheduled Successfully')),
+        SnackBar(content: Text('Payment Submitted Successfully')),
+      );
+    }
+  }
+
+  void _generateReceipt() {
+    if (_formKey.currentState!.validate()) {
+      // Generate a receipt and display it in the console.
+      print('Generating Receipt...');
+      print('Appointment ID: $_selectedAppointmentId');
+      print('Payment Method: $_selectedPaymentMethod');
+      print('Amount: ${_amountController.text}');
+      print('Transaction ID: ${_transactionIdController.text}');
+
+      // Optionally, you can navigate to another screen or show a success message.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Receipt Generated Successfully')),
       );
     }
   }
@@ -92,7 +48,7 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Appointment Scheduling'),
+        title: Text('Payment Entry Form'),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -100,10 +56,10 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
           key: _formKey,
           child: Column(
             children: [
-              TextFormField(
-                controller: _phoneController,
+              DropdownButtonFormField<String>(
+                value: _selectedAppointmentId,
                 decoration: InputDecoration(
-                  labelText: 'Phone Number',
+                  labelText: 'Appointment ID',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -116,31 +72,90 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                     borderSide: BorderSide(color: Colors.blue, width: 2.0),
                   ),
                 ),
-                keyboardType: TextInputType.phone,
+                items: _appointmentIds.map((appointmentId) {
+                  return DropdownMenuItem(
+                    value: appointmentId,
+                    child: Text(appointmentId),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedAppointmentId = value;
+                  });
+                },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter the phone number';
+                    return 'Please select an appointment ID';
                   }
                   return null;
                 },
               ),
               SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _searchPatient,
-                child: Text('Search Patient'),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
-                  shape: RoundedRectangleBorder(
+              DropdownButtonFormField<String>(
+                value: _selectedPaymentMethod,
+                decoration: InputDecoration(
+                  labelText: 'Payment Method',
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                  labelStyle: TextStyle(color: Colors.blueGrey),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
                 ),
+                items: _paymentMethods.map((paymentMethod) {
+                  return DropdownMenuItem(
+                    value: paymentMethod,
+                    child: Text(paymentMethod),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedPaymentMethod = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a payment method';
+                  }
+                  return null;
+                },
               ),
               SizedBox(height: 16),
-              if (!_patientExists)
+              TextFormField(
+                controller: _amountController,
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                  labelStyle: TextStyle(color: Colors.blueGrey),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the amount';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              if (_selectedPaymentMethod != 'Cash')
                 TextFormField(
-                  controller: _patientNameController,
+                  controller: _transactionIdController,
                   decoration: InputDecoration(
-                    labelText: 'Patient Name',
+                    labelText: 'Transaction ID',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
@@ -154,180 +169,37 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the patient name';
+                    if (_selectedPaymentMethod != 'Cash' && (value == null || value.isEmpty)) {
+                      return 'Please enter the transaction ID';
                     }
                     return null;
                   },
                 ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedDoctor,
-                decoration: InputDecoration(
-                  labelText: 'Doctor Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                  labelStyle: TextStyle(color: Colors.blueGrey),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
-                  ),
-                ),
-                items: _doctors.map((doctor) {
-                  return DropdownMenuItem(
-                    value: doctor,
-                    child: Text(doctor),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedDoctor = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select a doctor';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              InkWell(
-                onTap: () => _selectDate(context),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Appointment Date',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                    labelStyle: TextStyle(color: Colors.blueGrey),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(color: Colors.blue, width: 2.0),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _selectedDate == null
-                            ? 'Select Date'
-                            : '${_selectedDate!.toLocal()}'.split(' ')[0],
-                        style: TextStyle(fontSize: 16, color: Colors.blueGrey),
-                      ),
-                      Spacer(),
-                      Icon(Icons.calendar_today, color: Colors.blue),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              InkWell(
-                onTap: () => _selectTime(context),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Appointment Time',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                    labelStyle: TextStyle(color: Colors.blueGrey),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                      borderSide: BorderSide(color: Colors.blue, width: 2.0),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        _selectedTime == null
-                            ? 'Select Time'
-                            : '${_selectedTime!.format(context)}',
-                        style: TextStyle(fontSize: 16, color: Colors.blueGrey),
-                      ),
-                      Spacer(),
-                      Icon(Icons.access_time, color: Colors.blue),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                controller: _reasonController,
-                decoration: InputDecoration(
-                  labelText: 'Reason for Visit',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                  labelStyle: TextStyle(color: Colors.blueGrey),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the reason for visit';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedStatus,
-                decoration: InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-                  labelStyle: TextStyle(color: Colors.blueGrey),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide(color: Colors.blue, width: 2.0),
-                  ),
-                ),
-                items: _statuses.map((status) {
-                  return DropdownMenuItem(
-                    value: status,
-                    child: Text(status),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedStatus = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select a status';
-                  }
-                  return null;
-                },
-              ),
               SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submitForm,
-                child: Text('Schedule Appointment'),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: _submitPayment,
+                    child: Text('Submit Payment'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
                   ),
-                ),
+                  ElevatedButton(
+                    onPressed: _generateReceipt,
+                    child: Text('Generate Receipt'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -338,9 +210,8 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _patientNameController.dispose();
-    _reasonController.dispose();
+    _amountController.dispose();
+    _transactionIdController.dispose();
     super.dispose();
   }
 }
